@@ -29,18 +29,19 @@ server/
 ```bash
 git clone https://github.com/NextOne3292/Expense-tracker.git
 cd Expense-tracker/server
+### 2. Install dependencies
+```bash
 npm install
+
+### 3. Create environment variables
+Create a `.env` file inside the `server` folder:
+```env
 PORT=3000
 MONGO_URI=your_mongodb_uri
 JWT_SECRET_KEY=your_secret
+### 4. Start the development server
+```bash
 npm run dev
-### 6️⃣ Author  
 
-
-```md
-## Author
-Aswathy – MERN Stack Developer  
-GitHub: https://github.com/NextOne3292
-
-
-
+  
+ 
