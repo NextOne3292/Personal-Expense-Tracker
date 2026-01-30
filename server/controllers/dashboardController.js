@@ -45,14 +45,14 @@ export const getOverview = async (req, res) => {
 
     // Totals (small aggregations)
     const incomeAgg = Income.aggregate([
-      { $match: { user: userId, ...(dateMatch.date ? { date: dateMatch.date } : {}) } },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
-    ]).allowDiskUse(true);
+  { $match: { user: userId } },
+  { $group: { _id: null, total: { $sum: "$amount" } } }
+]).allowDiskUse(true);
 
-    const expenseAgg = Expense.aggregate([
-      { $match: { user: userId, ...(dateMatch.date ? { date: dateMatch.date } : {}) } },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
-    ]).allowDiskUse(true);
+const expenseAgg = Expense.aggregate([
+  { $match: { user: userId } },
+  { $group: { _id: null, total: { $sum: "$amount" } } }
+]).allowDiskUse(true);
 
     // Recent transactions using server-side union, sort, limit, and lookups
     const transactionsPipeline = [

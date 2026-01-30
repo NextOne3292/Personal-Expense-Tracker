@@ -10,7 +10,7 @@ const createToken = (userId) => {
 };
 
 // SIGNUP: create a new user and return token + user info (without password)
-export const signup = async (req, res) => {
+export const Register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
