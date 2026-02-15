@@ -1,11 +1,9 @@
 import Income from "../models/incomeModel.js";
 import Expense from "../models/expenseModel.js";
-
 export const getDashboardOverview = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Fetch all income and expenses
     const incomes = await Income.find({ user: userId })
       .populate("category", "title icon color type")
       .lean();
@@ -14,7 +12,6 @@ export const getDashboardOverview = async (req, res) => {
       .populate("category", "title icon color type")
       .lean();
 
-    // Calculate totals
     const totalIncome = incomes.reduce(
       (sum, item) => sum + item.amount,
       0
@@ -27,7 +24,6 @@ export const getDashboardOverview = async (req, res) => {
 
     const balance = totalIncome - totalExpense;
 
-    // Prepare recent transactions
     const incomeTx = incomes.map(i => ({
       _id: i._id,
       title: i.title,
@@ -48,9 +44,12 @@ export const getDashboardOverview = async (req, res) => {
 
     const recentTransactions = [...incomeTx, ...expenseTx]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 5); // only latest 5
+      .slice(0, 5);
 
     res.status(200).json({
+      user: {
+        name: req.user.name
+      },
       totals: {
         income: totalIncome,
         expense: totalExpense,

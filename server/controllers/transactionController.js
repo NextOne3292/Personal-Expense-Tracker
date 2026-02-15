@@ -4,48 +4,72 @@ import Expense from "../models/expenseModel.js";
 export const getAllTransactions = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { type } = req.query;
+    const { type, date, month, limit } = req.query;
+
+    const parsedLimit = Number(limit) || 0;
+
+    const buildQuery = () => {
+      let query = { user: userId };
+
+      // Exact date filter
+      if (date) {
+        const start = new Date(date);
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+        query.date = { $gte: start, $lte: end };
+      }
+
+      // Month filter (format: 2026-02)
+      if (month) {
+        const [year, monthValue] = month.split("-");
+        const start = new Date(year, monthValue - 1, 1);
+        const end = new Date(year, monthValue, 0, 23, 59, 59);
+        query.date = { $gte: start, $lte: end };
+      }
+
+      return query;
+    };
 
     let incomeData = [];
     let expenseData = [];
 
-    if (!type || type === "income") {
-      incomeData = await Income.find({ user: userId })
+    // Fetch income if needed
+    if (!type || type === "all" || type === "income") {
+      incomeData = await Income.find(buildQuery())
         .populate("category", "title color")
+        .sort({ date: -1 })
         .lean();
     }
 
-    if (!type || type === "expense") {
-      expenseData = await Expense.find({ user: userId })
+    // Fetch expense if needed
+    if (!type || type === "all" || type === "expense") {
+      expenseData = await Expense.find(buildQuery())
         .populate("category", "title color")
+        .sort({ date: -1 })
         .lean();
     }
 
-    const incomeTx = incomeData.map(i => ({
-      _id: i._id,
-      title: i.title,
-      amount: i.amount,
-      date: i.date,
-      category: i.category,
-      note: i.note,          // ✅ FIX
+    const incomeTx = incomeData.map((i) => ({
+      ...i,
       type: "income"
     }));
 
-    const expenseTx = expenseData.map(e => ({
-      _id: e._id,
-      title: e.title,
-      amount: e.amount,
-      date: e.date,
-      category: e.category,
-      note: e.note,          // ✅ FIX
+    const expenseTx = expenseData.map((e) => ({
+      ...e,
       type: "expense"
     }));
 
-    const allTransactions = [...incomeTx, ...expenseTx].sort(
+    let allTransactions = [...incomeTx, ...expenseTx].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     );
 
+    // Apply limit AFTER merge when type is "all"
+    if (parsedLimit) {
+      allTransactions = allTransactions.slice(0, parsedLimit);
+    }
+
     res.status(200).json(allTransactions);
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to load transactions" });
