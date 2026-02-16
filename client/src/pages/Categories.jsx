@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import API_BASE_URL from "../config/api";
 
-const API = "http://localhost:3000/api/categories";
-
-/* 🔊 success sound */
 const successSound = new Audio("/success.mp3");
 
 const Categories = () => {
@@ -19,15 +17,20 @@ const Categories = () => {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const authHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`
-  });
+  const token = localStorage.getItem("token");
+
+  const authHeaders = {
+    Authorization: `Bearer ${token}`
+  };
+
+  const API = `${API_BASE_URL}/categories`;
 
   /* ---------- Fetch categories ---------- */
   const fetchCategories = async () => {
+    setLoading(true);
     try {
       const url = filter === "all" ? API : `${API}?type=${filter}`;
-      const res = await fetch(url, { headers: authHeaders() });
+      const res = await fetch(url, { headers: authHeaders });
 
       if (!res.ok) throw new Error();
 
@@ -61,7 +64,7 @@ const Categories = () => {
         method,
         headers: {
           "Content-Type": "application/json",
-          ...authHeaders()
+          ...authHeaders
         },
         body: JSON.stringify({
           title: title.trim(),
@@ -98,7 +101,7 @@ const Categories = () => {
     try {
       const res = await fetch(`${API}/${id}`, {
         method: "DELETE",
-        headers: authHeaders()
+        headers: authHeaders
       });
 
       const data = await res.json();
@@ -188,6 +191,8 @@ const Categories = () => {
       {/* List */}
       {loading ? (
         <p>Loading...</p>
+      ) : categories.length === 0 ? (
+        <p>No categories found</p>
       ) : (
         categories.map(cat => (
           <div

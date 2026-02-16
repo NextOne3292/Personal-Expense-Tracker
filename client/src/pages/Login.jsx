@@ -1,32 +1,33 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import API_BASE_URL from "../config/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
-  // ✅ success sound (served from public folder)
   const successSound = new Audio("/success.mp3");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // basic validation
     if (!email || !password) {
       toast.error("Email and password are required");
       return;
     }
 
+    setLoading(true);
+
     try {
-      const res = await fetch("http://localhost:3000/api/users/login", {
+      const res = await fetch(`${API_BASE_URL}/users/login`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
@@ -36,20 +37,21 @@ const Login = () => {
         return;
       }
 
-      // store token
       localStorage.setItem("token", data.token);
 
-      // ✅ feedback
-      toast.success("Login successful");
+      successSound.currentTime = 0;
       successSound.play();
 
-      // ✅ redirect after feedback
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+      toast.success("Login successful");
 
-    } catch (error) {
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 800);
+
+    } catch {
       toast.error("Server error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,6 +77,7 @@ const Login = () => {
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
 
@@ -88,14 +91,16 @@ const Login = () => {
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-slate-900 text-white py-3 rounded-md font-medium hover:bg-slate-800 transition"
+            disabled={loading}
+            className="w-full bg-slate-900 text-white py-3 rounded-md font-medium hover:bg-slate-800 transition disabled:opacity-50"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import API_BASE_URL from "../config/api";
 
 const successSound = new Audio("/success.mp3");
 
@@ -23,20 +24,12 @@ const Transactions = () => {
 
       const params = new URLSearchParams();
 
-      if (filter !== "all") {
-        params.append("type", filter);
-      }
-
-      if (selectedDate) {
-        params.append("date", selectedDate);
-      }
-
-      if (selectedMonth) {
-        params.append("month", selectedMonth);
-      }
+      if (filter !== "all") params.append("type", filter);
+      if (selectedDate) params.append("date", selectedDate);
+      if (selectedMonth) params.append("month", selectedMonth);
 
       const res = await fetch(
-        `http://localhost:3000/api/transactions?${params.toString()}`,
+        `${API_BASE_URL}/transactions?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -73,8 +66,8 @@ const Transactions = () => {
 
     const url =
       tx.type === "income"
-        ? `http://localhost:3000/api/income/${tx._id}`
-        : `http://localhost:3000/api/expenses/${tx._id}`;
+        ? `${API_BASE_URL}/income/${tx._id}`
+        : `${API_BASE_URL}/expenses/${tx._id}`;
 
     try {
       const res = await fetch(url, {
@@ -93,7 +86,11 @@ const Transactions = () => {
       successSound.play();
 
       toast.success("Transaction deleted successfully");
-      fetchTransactions();
+
+      // Update locally instead of refetch (faster UX)
+      setTransactions(prev =>
+        prev.filter(item => item._id !== tx._id)
+      );
 
     } catch {
       toast.error("Server error");

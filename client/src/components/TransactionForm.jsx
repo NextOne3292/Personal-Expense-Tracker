@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import API_BASE_URL from "../config/api";
 
-const successSound = new Audio("./success.mp3");
+const successSound = new Audio("/success.mp3");
 
 const TransactionForm = ({ type }) => {
   const navigate = useNavigate();
@@ -23,23 +24,23 @@ const TransactionForm = ({ type }) => {
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const token = localStorage.getItem("token");
+
   const API_BASE =
     type === "income"
-      ? "http://localhost:3000/api/income"
-      : "http://localhost:3000/api/expenses";
+      ? `${API_BASE_URL}/income`
+      : `${API_BASE_URL}/expenses`;
 
   const textColor = isIncome ? "text-green-600" : "text-red-600";
   const buttonColor = isIncome
     ? "bg-green-600 hover:bg-green-700"
     : "bg-red-600 hover:bg-red-700";
 
-  /* -------- Fetch categories -------- */
+  /* ---------------- Fetch Categories ---------------- */
   useEffect(() => {
     const fetchCategories = async () => {
-      const token = localStorage.getItem("token");
-
       try {
-        const res = await fetch("http://localhost:3000/api/categories", {
+        const res = await fetch(`${API_BASE_URL}/categories`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -53,15 +54,13 @@ const TransactionForm = ({ type }) => {
     };
 
     fetchCategories();
-  }, [type]);
+  }, [type, token]);
 
-  /* -------- Fetch edit data -------- */
+  /* ---------------- Fetch Edit Data ---------------- */
   useEffect(() => {
     if (!editId) return;
 
     const fetchTransaction = async () => {
-      const token = localStorage.getItem("token");
-
       try {
         const res = await fetch(`${API_BASE}/${editId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -88,18 +87,16 @@ const TransactionForm = ({ type }) => {
     };
 
     fetchTransaction();
-  }, [editId, API_BASE, navigate, type]);
+  }, [editId, API_BASE, navigate, token, type]);
 
-  /* -------- Fetch recent (via unified transactions API) -------- */
+  /* ---------------- Fetch Recent ---------------- */
   useEffect(() => {
     if (editId) return;
 
     const fetchRecent = async () => {
-      const token = localStorage.getItem("token");
-
       try {
         const res = await fetch(
-          `http://localhost:3000/api/transactions?type=${type}&limit=5`,
+          `${API_BASE_URL}/transactions?type=${type}&limit=5`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -115,18 +112,19 @@ const TransactionForm = ({ type }) => {
     };
 
     fetchRecent();
-  }, [editId, type]);
+  }, [editId, type, token]);
 
+  /* ---------------- Handle Change ---------------- */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  /* ---------------- Handle Submit ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const token = localStorage.getItem("token");
     const url = editId ? `${API_BASE}/${editId}` : API_BASE;
     const method = editId ? "PUT" : "POST";
 
@@ -156,7 +154,7 @@ const TransactionForm = ({ type }) => {
       toast.success(
         editId
           ? `${type} updated`
-          : `${type.charAt(0).toUpperCase() + type.slice(1)} added successfully`
+          : `${type.charAt(0).toUpperCase() + type.slice(1)} added`
       );
 
       if (editId) {
@@ -164,7 +162,6 @@ const TransactionForm = ({ type }) => {
         return;
       }
 
-      // update recent locally without refetch
       setRecentTransactions(prev => [data, ...prev].slice(0, 5));
 
       setFormData({
@@ -182,6 +179,7 @@ const TransactionForm = ({ type }) => {
     }
   };
 
+  /* ---------------- UI ---------------- */
   return (
     <div className="p-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">
@@ -266,19 +264,9 @@ const TransactionForm = ({ type }) => {
 
       {!editId && recentTransactions.length > 0 && (
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="font-semibold text-lg">
-              Recent {type}
-            </h2>
-
-            <button
-              onClick={() => navigate("/transactions")}
-              className="text-blue-600 hover:underline text-sm font-medium"
-              type="button"
-            >
-              See all
-            </button>
-          </div>
+          <h2 className="font-semibold text-lg mb-3">
+            Recent {type}
+          </h2>
 
           <div className="space-y-2">
             {recentTransactions.map(tx => (

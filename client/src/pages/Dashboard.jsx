@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import API_BASE_URL from "../config/api";
 
 const SidebarLink = ({ label, icon, path, navigate, active }) => (
   <button
@@ -56,7 +57,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [totals, setTotals] = useState({ income: 0, expense: 0, balance: 0 });
   const [recent, setRecent] = useState([]);
-  const [userName, setUserName] = useState(""); // ✅ added
+  const [userName, setUserName] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -64,7 +65,12 @@ const Dashboard = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:3000/api/dashboard/overview", {
+        if (!token) {
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/dashboard/overview`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -74,14 +80,13 @@ const Dashboard = () => {
           return;
         }
 
+        if (!res.ok) throw new Error();
+
         const data = await res.json();
-        
 
-        // ✅ set user name
         setUserName(data.user?.name || "");
-
-        setTotals(data.totals);
-        setRecent(data.recent);
+        setTotals(data.totals || { income: 0, expense: 0, balance: 0 });
+        setRecent(data.recent || []);
 
       } catch {
         setError("Failed to load dashboard data");
@@ -149,18 +154,18 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Transactions */}
-       <div className="flex justify-between items-center mb-4">
-  <h2 className="text-xl font-semibold">
-    Recent Transactions
-  </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">
+            Recent Transactions
+          </h2>
 
-  <button
-    onClick={() => navigate("/transactions")}
-    className="text-blue-600 hover:underline text-sm font-medium"
-  >
-    See all
-  </button>
-</div>
+          <button
+            onClick={() => navigate("/transactions")}
+            className="text-blue-600 hover:underline text-sm font-medium"
+          >
+            See all
+          </button>
+        </div>
 
         {loading && <Skeleton />}
 
