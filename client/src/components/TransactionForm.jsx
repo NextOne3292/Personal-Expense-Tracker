@@ -47,7 +47,8 @@ const TransactionForm = ({ type }) => {
         if (!res.ok) throw new Error();
 
         const data = await res.json();
-        setCategories(data.filter(cat => cat.type === type));
+        const filtered = data.filter(cat => cat.type === type);
+        setCategories(filtered);
       } catch {
         toast.error(`Failed to load ${type} categories`);
       }
@@ -123,6 +124,12 @@ const TransactionForm = ({ type }) => {
   /* ---------------- Handle Submit ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (categories.length === 0) {
+      toast.error("Please add a category first");
+      return;
+    }
+
     setLoading(true);
 
     const url = editId ? `${API_BASE}/${editId}` : API_BASE;
@@ -162,7 +169,6 @@ const TransactionForm = ({ type }) => {
         return;
       }
 
-      // Add new transaction to top (still max 5)
       setRecentTransactions(prev => [data, ...prev].slice(0, 5));
 
       setFormData({
@@ -208,21 +214,35 @@ const TransactionForm = ({ type }) => {
           required
         />
 
-        <select
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          disabled={categories.length === 0}
-          className="w-full border p-2 rounded disabled:bg-gray-100"
-          required
-        >
-          <option value="">Select category</option>
-          {categories.map(cat => (
-            <option key={cat._id} value={cat._id}>
-              {cat.title}
-            </option>
-          ))}
-        </select>
+        {categories.length === 0 ? (
+          <div className="border p-4 rounded bg-yellow-50 text-center">
+            <p className="text-sm mb-3">
+              No {type} categories found.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/categories")}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Add Category First
+            </button>
+          </div>
+        ) : (
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          >
+            <option value="">Select category</option>
+            {categories.map(cat => (
+              <option key={cat._id} value={cat._id}>
+                {cat.title}
+              </option>
+            ))}
+          </select>
+        )}
 
         <input
           type="date"
@@ -242,7 +262,7 @@ const TransactionForm = ({ type }) => {
 
         <button
           type="submit"
-          disabled={loading || categories.length === 0}
+          disabled={loading}
           className={`w-full text-white p-3 rounded disabled:opacity-50 ${buttonColor}`}
         >
           {loading ? "Saving..." : `Save ${type}`}
