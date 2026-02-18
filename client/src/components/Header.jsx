@@ -9,8 +9,10 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // auth check (derived from token)
-  const isAuth = !!localStorage.getItem("token");
+  // Proper token validation
+  const token = localStorage.getItem("token");
+  const isAuth =
+    token && token !== "undefined" && token !== "null";
 
   /* ---------- Logout ---------- */
   const handleLogout = () => {
@@ -30,7 +32,10 @@ const Header = () => {
 
         {/* Logo */}
         <h1 className="text-xl font-bold tracking-wide">
-          <Link to="/" className="hover:text-slate-300 transition">
+          <Link
+            to={isAuth ? "/dashboard" : "/"}
+            className="hover:text-slate-300 transition"
+          >
             Track<span className="text-slate-300">Wise</span>
           </Link>
         </h1>
@@ -73,7 +78,6 @@ const Header = () => {
       {/* Mobile Dropdown Menu */}
       {menuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-slate-800 px-4 py-2 space-y-2 shadow-lg">
-
           {!isAuth ? (
             <>
               <Link
@@ -110,7 +114,6 @@ const Header = () => {
               </button>
             </>
           )}
-
         </div>
       )}
     </header>

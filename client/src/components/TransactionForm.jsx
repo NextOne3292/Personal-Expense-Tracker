@@ -89,7 +89,7 @@ const TransactionForm = ({ type }) => {
     fetchTransaction();
   }, [editId, API_BASE, navigate, token, type]);
 
-  /* ---------------- Fetch Recent ---------------- */
+  /* ---------------- Fetch Recent (Limit 5) ---------------- */
   useEffect(() => {
     if (editId) return;
 
@@ -162,6 +162,7 @@ const TransactionForm = ({ type }) => {
         return;
       }
 
+      // Add new transaction to top (still max 5)
       setRecentTransactions(prev => [data, ...prev].slice(0, 5));
 
       setFormData({
@@ -186,22 +187,8 @@ const TransactionForm = ({ type }) => {
         {editId ? `Edit ${type}` : `Add ${type}`}
       </h1>
 
-      {!editId && !loading && categories.length === 0 && (
-        <div className="border border-dashed rounded-lg p-6 text-center bg-gray-50 mb-6">
-          <p className="text-lg font-semibold text-gray-700">
-            No {type} categories yet
-          </p>
-          <button
-            onClick={() => navigate("/categories")}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            type="button"
-          >
-            + Add Category
-          </button>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-4">
+
         <input
           name="title"
           placeholder={`${type} title`}
@@ -262,11 +249,22 @@ const TransactionForm = ({ type }) => {
         </button>
       </form>
 
+      {/* Recent Section */}
       {!editId && recentTransactions.length > 0 && (
         <div className="mt-8">
-          <h2 className="font-semibold text-lg mb-3">
-            Recent {type}
-          </h2>
+
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-semibold text-lg">
+              Recent {type}
+            </h2>
+
+            <button
+              onClick={() => navigate("/transactions")}
+              className="text-blue-600 hover:underline text-sm font-medium"
+            >
+              See all
+            </button>
+          </div>
 
           <div className="space-y-2">
             {recentTransactions.map(tx => (

@@ -24,7 +24,12 @@ const Sidebar = ({ open, navigate }) => {
         ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
       `}
     >
-      <h2 className="text-xl font-bold mb-6">TrackWise</h2>
+      <h2
+        onClick={() => navigate("/dashboard")}
+        className="text-xl font-bold mb-6 cursor-pointer"
+      >
+        TrackWise
+      </h2>
 
       <nav className="space-y-2">
         <SidebarLink label="Dashboard" icon="🏠" path="/dashboard" navigate={navigate} active={pathname === "/dashboard"} />
@@ -54,7 +59,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [totals, setTotals] = useState({ income: 0, expense: 0, balance: 0 });
   const [recent, setRecent] = useState([]);
   const [userName, setUserName] = useState("");
@@ -62,13 +67,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     const loadDashboard = async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem("token");
-
-        if (!token) {
-          navigate("/login", { replace: true });
-          return;
-        }
 
         const res = await fetch(`${API_BASE_URL}/dashboard/overview`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -87,7 +88,6 @@ const Dashboard = () => {
         setUserName(data.user?.name || "");
         setTotals(data.totals || { income: 0, expense: 0, balance: 0 });
         setRecent(data.recent || []);
-
       } catch {
         setError("Failed to load dashboard data");
       } finally {
